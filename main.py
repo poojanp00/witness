@@ -1,7 +1,7 @@
 import random
-
-from game.data.artifacts import roles, weapons, rooms
-from game.engine import recall_player_memory
+import json
+from game.data.artifacts import ROLES, WEAPONS, ROOMS
+from game.clues.engine import recall_player_memory
 from game.utils.time_utils import random_time
 
 # -----------------------------
@@ -13,8 +13,8 @@ from game.utils.time_utils import random_time
 def generate_crime(assignments):
     culprit = [name for name, data in assignments.items() if data["role"] == "culprit"][0]
     accomplice = [name for name, data in assignments.items() if data["role"] == "accomplice"]
-    weapon = random.choice(list(weapons.keys()))
-    room = random.choice(list(rooms.keys()))
+    weapon = random.choice(list(WEAPONS.keys()))
+    room = random.choice(list(ROOMS.keys()))
     time = random_time()
 
     return {
@@ -25,8 +25,8 @@ def generate_crime(assignments):
     }
 
 def assign_roles(players):
-    role_pool = ["detective", "culprit", "accomplice", "lover", "lover", "rival", "gossip", "clueless"]
-    # If you have fewer than 8 players, trim the pool
+    role_pool = ["detective", "culprit", "accomplice", "lover", "lover", "rival", "gossip", "accomplice", "clueless", "clueless"]
+    # If you have fewer than 10 players, trim the pool
     role_pool = role_pool[:len(players)]
     
     random.shuffle(role_pool)
@@ -37,7 +37,7 @@ def assign_roles(players):
         role = role_pool[i]
         assignments[name] = {
             "role": role,
-            "dossier": roles[role], # Pulls the weights and schpeel
+            "dossier": ROLES[role], # Pulls the weights and schpeel
             "target": None,
             "partner": None
         }
@@ -56,7 +56,6 @@ def assign_roles(players):
     return assignments
 
 
-
 # -----------------------------
 # MAIN GENERATOR
 # -----------------------------
@@ -67,12 +66,13 @@ def initialize_game(assignments):
     crime = generate_crime(assignments)
     guilty = [name for name, data in assignments.items() if data["role"] in ["culprit", "accomplice"]]
     innocent = [name for name, data in assignments.items() if name not in guilty]
+    lovers = [name for name, data in assignments.items() if data["role"] == "lover"]
 
     # 2. Generate 5 personalized clues for each player
     clues = {
         name: [
-            recall_player_memory(data["role"], crime, guilty, innocent, data["dossier"]["weights"]) 
-            for _ in range(5)
+            recall_player_memory(crime, guilty, innocent, lovers, data["dossier"]["weights"]) 
+            for _ in range(7)
         ]
         for name, data in assignments.items()
     }
@@ -85,6 +85,12 @@ players = ["Poojan", "Diya", "Kishan", "Shalini", "Sonal", "Sandeep", "Baa"]
 # print(clues)
 
 assignments = assign_roles(players)
-print(assignments)
+# print(assignments)
+print("--- GAME ASSIGNMENTS ---")
+for name, data in assignments.items():
+    role_label = data["role"].upper()
+    print(f"{name.ljust(12)} | Role: {role_label}")
+print("\n\n")
 player_clues = initialize_game(assignments)
-print(player_clues)
+# print(player_clues)
+print(json.dumps(player_clues, indent=4))

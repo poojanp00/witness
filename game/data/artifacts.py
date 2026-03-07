@@ -4,7 +4,7 @@
 # File contains the artifacts and their details
 # -------------------------------
 
-roles = {
+ROLES = {
     "culprit": {
         "welcome": "The deed is done, and the adrenaline is fading. Now, the real work begins. You must blend in, fade into the background, and lead this pack of hounds on a wild goose chase.",
         "strategy": "You are the architect of confusion. Most of your memories are calculated fabrications designed to frame others. You rarely trip over your own story.",
@@ -84,7 +84,7 @@ roles = {
     }
 }
 
-rooms = {
+ROOMS = {
   "courtyard": ["wet stone footsteps", "a dropped garden glove", "mud tracked across the ground"],
   "balcony": ["a chair knocked over", "a dropped glass", "scratches on the railing"],
   "terrace": ["a broken wine glass", "a spilled drink", "chairs pushed aside"],
@@ -97,21 +97,21 @@ rooms = {
   "wine cellar": ["a cracked bottle", "wine dripping on the floor", "a cork left nearby"]
 }
 
-weapons = {
+WEAPONS = {
     "knife": {
-        "noises": ["a scream", "a scrape", "a clang", "a thud", "someone struggling", "a gasp", "something falling", "a muffled cry", "silence"],
+        "noises": ["a scream", "a scrape", "a clang", "a thud", "someone struggling", "a gasp", "something falling", "a muffled cry", "an eerie silence"],
         "sights": ["a flash of metal", "someone wiping something off a blade", "something shiny in someone's hand", "a blade catching the light", "someone quickly hiding a knife"]
     },
     "rope": {
-        "noises": ["a choking sound", "someone struggling", "a snap", "a thud", "someone gasping", "silence", "a muffled cry", "a scrape", "something falling"],
+        "noises": ["a choking sound", "someone struggling", "a snap", "a thud", "someone gasping", "an eerie silence", "a muffled cry", "a scrape", "something falling"],
         "sights": ["a coil of rope", "someone holding a length of rope", "rope fibers on the ground", "something dangling from someone's hand", "a rope quickly stuffed into a pocket"]
     },
     "gun": {
-        "noises": ["a scream", "a bang", "a gunshot", "a thud", "something falling", "a gasp", "silence", "a loud crack", "a muffled cry"],
+        "noises": ["a scream", "a bang", "a gunshot", "a thud", "something falling", "a gasp", "an eerie silence", "a loud crack", "a muffled cry"],
         "sights": ["a small handgun", "someone holding something metallic", "a flash from a muzzle", "someone tucking a gun away", "a dark object shaped like a pistol"]
     },
     "poison": {
-        "noises": ["a thud", "silence", "someone gasping", "a choking sound", "a muffled cry", "something falling", "a cough", "a scrape", "a groan"],
+        "noises": ["a thud", "an eerie silence", "someone gasping", "a choking sound", "a muffled cry", "something falling", "a cough", "a scrape", "a groan"],
         "sights": ["a small vial", "someone pouring something into a drink", "a strange bottle on the table", "someone slipping something into a glass", "a small container quickly hidden"]
     }
 }

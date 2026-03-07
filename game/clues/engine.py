@@ -27,40 +27,39 @@ def weighted_choice(weight_dict):
 # This function takes a role and a crime, and generates a clue based on the role's weights.
 # The clue can be incriminating, misleading, social, or random.
 # -----------------------------
-def recall_player_memory(role, crime, guilty, innocent, weights):
+def recall_player_memory(crime, guilty, innocent, lovers, weights):
     # Pick a clue type based on the role's weights
     clue_type = weighted_choice(weights)
 
     if clue_type == "incriminating":
-        roll = random.random()
-        # 25% chance to generate an incriminating clue of each type
-        if roll < 0.25:
-            return noise_clue(crime, 1)
-
-        if 0.25 < roll < 0.50:
-            return weapon_clue(crime, 1)
-
-        if 0.50 < roll < 0.75:
-            return room_clue(crime, 1)
-        
-        return movement_clue(crime, guilty, innocent, 1)
+        clue_options = [
+            lambda: noise_clue(crime, 1),
+            lambda: weapon_clue(crime, 1),
+            lambda: room_clue(crime, 1),
+            lambda: movement_clue(crime, guilty, innocent, 1)
+        ]
+        # Randomly select and execute one
+        return random.choice(clue_options)()
 
     if clue_type == "misleading":
-        roll = random.random()
-        # 25% chance to generate a misleading clue of each type
-        if roll < 0.25:
-            return noise_clue(crime, 0)
-
-        if 0.25 < roll < 0.50:
-            return weapon_clue(crime, 0)
-
-        if 0.50 < roll < 0.75:
-            return room_clue(crime, 0)
-        
-        return movement_clue(crime, guilty, innocent, 0)
+        clue_options = [
+            lambda: noise_clue(crime, 0),
+            lambda: weapon_clue(crime, 0),
+            lambda: room_clue(crime, 0),
+            lambda: movement_clue(crime, guilty, innocent, 0)
+        ]
+        # Randomly select and execute one
+        return random.choice(clue_options)()
 
     if clue_type == "social":
-        return social_clue(guilty, innocent)
+        roll = random.random()
+        if roll < 0.4 :
+            return social_clue(guilty)
+        if 0.4 < roll < 0.8:
+            return social_clue(lovers) 
+        else:
+            innocent_pair = random.sample(innocent, 2) # all guests
+            return social_clue(innocent_pair)
 
     return random_clue()
 

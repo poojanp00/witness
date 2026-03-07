@@ -2,7 +2,7 @@
 # FRAGMENTS
 # -----------------------------
 
-observations = [
+OBSERVATIONS = [
     "saw",
     "think I saw",
     "could have sworn I saw",
@@ -13,20 +13,16 @@ observations = [
     "noticed",
     "briefly noticed",
     "clearly remember",
-    "heard",
-    # "sensed"
 ]
 
-subjects = [
+SUBJECTS = [
     "someone",
     "a figure",
     "a silhouette",
-    "a blur",
     "two people",
-    # "you"
 ]
 
-movements = [
+MOVEMENTS = [
     "leaving",
     "entering",
     "standing near",
@@ -40,18 +36,26 @@ movements = [
     "seeming nervous around",
 ]
 
-social = [
-    "arguing with someone near",
-    "whispering in the vicinity of",
-    "speaking in a hushed voice around",
-    "having a tense conversation by",
-    "seeming upset in",
-    "talking quietly close to the",
-    "raising their voice by",
-    "having a heated discussion by",
+AREAS = [
+    "the premises",
+    "the scene",
+    "the area",
+    "the room"
 ]
 
-randoms = [
+SOCIAL = [
+    "was arguing intensely with",
+    "was seen sharing a secret whisper with",
+    "was caught looking nervously at",
+    "seemed to be avoiding eye contact with",
+    "was overheard laughing about something with",
+    "handed a mysterious envelope to",
+    "gave a hushed warning to",
+    "handed some object to",
+    "made some kind of promise to",
+]
+
+RANDOMS = [
     "dropped my drink",
     "was looking for food",
     "heard music",
@@ -63,8 +67,17 @@ randoms = [
     "left quickly because I thought someone saw me",
 ]
 
-times = [
-    "around {crime_time}",
+TIMES1 = [
+    "at {crime_time}",
+    "at exactly {crime_time}",
+    "precisely at {crime_time}",
+    "right at {crime_time}",
+    "moments after {crime_time}",
+    "seconds before {crime_time}",
+    "at {crime_time} sharp"
+]
+
+TIMES2 = [
     "just before {crime_time}",
     "just after {crime_time}",
     "moments before {crime_time}",
@@ -73,6 +86,10 @@ times = [
     "shortly after {crime_time}",
     "not long before {crime_time}",
     "not long after {crime_time}",
+    "around {crime_time}"
+]
+
+TIMES3 = [
     "earlier in the evening",
     "later in the evening",
     "after everything happened",
