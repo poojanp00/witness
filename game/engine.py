@@ -2,20 +2,9 @@
 # GAME ENGINE
 # -----------------------------
 
-
 import random
 
-# from game.data.weapon import weapons
-# from game.data.room import rooms
-
-# from game.utils.time_utils import random_time
-from game.clues.noise import noise_clue
-from game.clues.movement import movement_clue
-from game.clues.room import room_clue
-from game.clues.weapon import weapon_clue
-from game.clues.random import random_clue, social_clue
-
-from game.weights import weights
+from game.clues.generators import room_clue, movement_clue, noise_clue, weapon_clue, random_clue, social_clue
 
 # -----------------------------
 # CLUE TYPE PICKER
@@ -38,10 +27,9 @@ def weighted_choice(weight_dict):
 # This function takes a role and a crime, and generates a clue based on the role's weights.
 # The clue can be incriminating, misleading, social, or random.
 # -----------------------------
-
-def generate_clue(role, crime):
+def recall_player_memory(role, crime, guilty, innocent, weights):
     # Pick a clue type based on the role's weights
-    clue_type = weighted_choice(weights[role])
+    clue_type = weighted_choice(weights)
 
     if clue_type == "incriminating":
         roll = random.random()
@@ -55,7 +43,7 @@ def generate_clue(role, crime):
         if 0.50 < roll < 0.75:
             return room_clue(crime, 1)
         
-        return movement_clue(crime, 1)
+        return movement_clue(crime, guilty, innocent, 1)
 
     if clue_type == "misleading":
         roll = random.random()
@@ -69,10 +57,10 @@ def generate_clue(role, crime):
         if 0.50 < roll < 0.75:
             return room_clue(crime, 0)
         
-        return movement_clue(crime, 0)
+        return movement_clue(crime, guilty, innocent, 0)
 
     if clue_type == "social":
-        return social_clue()
+        return social_clue(guilty, innocent)
 
     return random_clue()
 

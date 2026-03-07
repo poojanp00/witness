@@ -1,62 +1,90 @@
 import random
 
-from game.data.roles import guests, culprits
+from game.data.artifacts import roles, weapons, rooms
+from game.engine import recall_player_memory
+from game.utils.time_utils import random_time
 
-from game.crime import generate_crime
-from game.engine import generate_clue
+# -----------------------------
+# CRIME GENERATION
+# -----------------------------
+# This function generates a crime with a fixed culprit
+# and a random weapon, room, and time.
+# -----------------------------
+def generate_crime(assignments):
+    culprit = [name for name, data in assignments.items() if data["role"] == "culprit"][0]
+    accomplice = [name for name, data in assignments.items() if data["role"] == "accomplice"]
+    weapon = random.choice(list(weapons.keys()))
+    room = random.choice(list(rooms.keys()))
+    time = random_time()
+
+    return {
+        "culprit":culprit,
+        "weapon":weapon,
+        "room":room,
+        "time":time
+    }
+
+def assign_roles(players):
+    role_pool = ["detective", "culprit", "accomplice", "lover", "lover", "rival", "gossip", "clueless"]
+    # If you have fewer than 8 players, trim the pool
+    role_pool = role_pool[:len(players)]
+    
+    random.shuffle(role_pool)
+    random.shuffle(players)
+    
+    assignments = {}
+    for i, name in enumerate(players):
+        role = role_pool[i]
+        assignments[name] = {
+            "role": role,
+            "dossier": roles[role], # Pulls the weights and schpeel
+            "target": None,
+            "partner": None
+        }
+    for name, data in assignments.items():
+        # Assign a Target to the Rival
+        if data["role"] == "rival":
+            potential_targets = [p for p in players if p != name]
+            data["target"] = random.choice(potential_targets)
+            
+        # Link the two Lovers so they know who to protect
+        if data["role"] == "lover":
+            partners = [p for p, d in assignments.items() if d["role"] == "lover" and p != name]
+            if partners:
+                data["partner"] = partners[0]
+
+    return assignments
 
 
-from game.printer import print_mystery
 
 # -----------------------------
 # MAIN GENERATOR
 # -----------------------------
 # This function generates a crime and clues for each witness based on their role.
 # -----------------------------
-def generate_mystery():
-    # 1. Generate the core crime data once
-    crime = generate_crime()
+def initialize_game(assignments):
+    # 1. Generate the core crime data (Room, Weapon, Time)
+    crime = generate_crime(assignments)
+    guilty = [name for name, data in assignments.items() if data["role"] in ["culprit", "accomplice"]]
+    innocent = [name for name, data in assignments.items() if name not in guilty]
 
-    # 2. Merge roles into a single dictionary for O(1) lookup
-    # This prevents rebuilding the dictionary inside the loop
-    all_roles = {**guests, **culprits}
-    
-    # 3. Use dictionary comprehension for faster clue generation
-    # Generating all 5 clues for each person in a single pass
+    # 2. Generate 5 personalized clues for each player
     clues = {
-        person: [generate_clue(role, crime) for _ in range(5)]
-        for person, role in all_roles.items()
+        name: [
+            recall_player_memory(data["role"], crime, guilty, innocent, data["dossier"]["weights"]) 
+            for _ in range(5)
+        ]
+        for name, data in assignments.items()
     }
-
     return crime, clues
 
-
-# def distribute_player_hands(player_names, crime, clues):
-#     # 1. Define the roles to be assigned
-#     roles_pool = ["detective", "culprit", "accomplice", "lover", "lover", "rival", "gossip", "clueless"]
-#     random.shuffle(roles_pool)
-#     random.shuffle(player_names)
-
-#     player_hands = {}
-
-#     for i in range(len(player_names)):
-#         name = player_names[i]
-#         role = roles_pool[i]
-        
-#         # Get the clues generated for this specific role/person
-#         # Assuming 'clues' is the dict from generate_mystery()
-#         personal_clues = clues.get(name, ["No clues found for this witness."])
-
-#         player_hands[name] = {
-#             "role": role,
-#             "dossier": get_dossier(role),
-#             "clues": personal_clues
-#         }
-    
-#     return player_hands
-
 players = ["Poojan", "Diya", "Kishan", "Shalini", "Sonal", "Sandeep", "Baa"]
-crime, clues = generate_mystery()
+# crime, clues = 
 # distribute_player_hands(players, crime, clues)
-print_mystery(crime, clues)
+# print_mystery(crime, clues)
 # print(clues)
+
+assignments = assign_roles(players)
+print(assignments)
+player_clues = initialize_game(assignments)
+print(player_clues)

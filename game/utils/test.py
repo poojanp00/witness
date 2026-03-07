@@ -1,9 +1,9 @@
 from game.crime import generate_crime
-from game.clues.movement import movement_clue
-from game.clues.noise import noise_clue
-from game.clues.weapon import weapon_clue
-from game.clues.room import room_clue
-from game.clues.random import random_clue, social_clue
+from game.clues.obs4 import movement_clue
+from game.clues.obs3 import noise_clue
+from game.clues.generators import weapon_clue
+from game.clues.obs import room_clue
+from game.clues.obs2 import random_clue, social_clue
 
 # -----------------------------
 # Test
