@@ -72,9 +72,9 @@ ROLES = {
         "objective": "Keep the conversation moving and piece together the social web of the night.",
         "weights": {
             "incriminating": 25,
-            "social": 65,
+            "social": 60,
             "misleading": 10,
-            "random": 0
+            "random": 5
         }
     },
     "clueless": {

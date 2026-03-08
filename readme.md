@@ -39,17 +39,17 @@ witness/
 
 ### ROLES Dictionary
 
-Each role defines a player's perspective, bias, and memory distribution. Each includes a `persona` field for character flavor.
+Each role defines a player's perspective, bias, and memory distribution based on their weights.
 
-| Role | Persona | Weights (Inc/Mis/Soc/Rand) | Key Trait |
-|------|---------|----------------------------|-----------|
-| **detective** | The Keen Observer | 70/20/0/10 | Highly accurate incriminating memories |
-| **culprit** | The Master of Puppets | 0/80/0/20 | Master of misleading fabrications |
-| **accomplice** | The Loyal Shadow | 10/70/0/20 | Protects culprit with red herrings |
-| **lover** | The Devoted Protector | 45/35/0/20 | Biased observations of loved ones |
-| **rival** | The Sharp Tongue | 25/55/5/15 | Misremembers to frame enemies |
-| **gossip** | The Social Butterfly | 25/10/65/0 | Tracks social interactions obsessively |
-| **clueless** | The Accidental Witness | 30/10/25/35 | Random mix of truth and nonsense |
+| Role | Weights (Inc/Mis/Soc/Rand) |
+|------|----------------------------|
+| **detective** | 70/20/0/10 |
+| **culprit** | 0/80/0/20 |
+| **accomplice** | 10/70/0/20 |
+| **lover** | 45/35/0/20 |
+| **rival** | 25/55/5/15 |
+| **gossip** | 25/60/5/10 |
+| **clueless** | 30/10/25/35 |
 
 **Weights breakdown:**
 - `incriminating`: Truthful memories pointing to the culprit
@@ -169,23 +169,111 @@ weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
 
 ### 14 Memory Type Probabilities by Role
 
-Each player receives memories distributed across **14 distinct memory types** (with unique function + prefix combinations) based on their role's weights:
+| Role | WPN Noise Inc | WPN Evid Inc | RM Noise Inc | RM Evid Inc | Mov Inc | SOC Guilty | WPN Noise Misl | WPN Evid Misl | RM Noise Misl | RM Evid Misl | Mov Misl | SOC Innocent | SOC Lovers | Random |
+|------|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Culprit | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 10.0% | 10.0% | 10.0% | 10.0% | 20.0% | 20.0% | 0.0% | 20.0% |
+| Accomplice | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 2.5% | 8.8% | 8.8% | 8.8% | 8.8% | 17.5% | 17.5% | 0.0% | 20.0% |
+| Detective | 8.8% | 8.8% | 8.8% | 8.8% | 17.5% | 17.5% | 2.5% | 2.5% | 2.5% | 2.5% | 5.0% | 5.0% | 0.0% | 10.0% |
+| Lover | 5.6% | 5.6% | 5.6% | 5.6% | 11.2% | 11.2% | 4.4% | 4.4% | 4.4% | 4.4% | 8.8% | 8.8% | 0.0% | 20.0% |
+| Rival | 3.1% | 3.1% | 3.1% | 3.1% | 6.2% | 8.2% | 6.9% | 6.9% | 6.9% | 6.9% | 13.8% | 14.8% | 2.0% | 15.0% |
+| Gossip | 3.1% | 3.1% | 3.1% | 3.1% | 6.2% | 30.2% | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 14.5% | 24.0% | 5.0% |
+| Clueless | 3.8% | 3.8% | 3.8% | 3.8% | 7.5% | 17.5% | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 7.5% | 10.0% | 35.0% |
+| AVG | 3.7% | 3.7% | 3.7% | 3.7% | 7.3% | 12.5% | 5.0% | 5.0% | 5.0% | 5.0% | 10.0% | 12.6% | 5.1% | 17.9% |
 
-| Role | WPN Noise (Inc) | WPN Evid (Inc) | RM Noise (Inc) | RM Evid (Inc) | Mov (Inc) | SOC Guilty (Inc) | WPN Noise (Misl) | WPN Evid (Misl) | RM Noise (Misl) | RM Evid (Misl) | Mov (Misl) | SOC Innocent (Misl) | SOC Guilty | SOC Lovers | SOC Innocent | Random | Role |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Culprit** | 0.00% | 0.00% | 0.00% | 0.00% | 0.00% | 0.00% | 10.00% | 10.00% | 10.00% | 10.00% | 20.00% | 20.00% | 0.00% | 0.00% | 0.00% | 20.00% | **Culprit** |
-| **Accomplice** | 1.25% | 1.25% | 1.25% | 1.25% | 2.50% | 2.50% | 8.75% | 8.75% | 8.75% | 8.75% | 17.50% | 17.50% | 0.00% | 0.00% | 0.00% | 20.00% | **Accomplice** |
-| **Detective** | 8.75% | 8.75% | 8.75% | 8.75% | 17.50% | 17.50% | 2.50% | 2.50% | 2.50% | 2.50% | 5.00% | 5.00% | 0.00% | 0.00% | 0.00% | 10.00% | **Detective** |
-| **Lover** | 5.62% | 5.62% | 5.62% | 5.62% | 11.25% | 11.25% | 4.38% | 4.38% | 4.38% | 4.38% | 8.75% | 8.75% | 0.00% | 0.00% | 0.00% | 20.00% | **Lover** |
-| **Rival** | 3.12% | 3.12% | 3.12% | 3.12% | 6.25% | 6.25% | 6.88% | 6.88% | 6.88% | 6.88% | 13.75% | 13.75% | 2.00% | 2.00% | 1.00% | 15.00% | **Rival** |
-| **Gossip** | 3.12% | 3.12% | 3.12% | 3.12% | 6.25% | 6.25% | 1.25% | 1.25% | 1.25% | 1.25% | 2.50% | 2.50% | 26.00% | 26.00% | 13.00% | 0.00% | **Gossip** |
-| **Clueless** | 3.75% | 3.75% | 3.75% | 3.75% | 7.50% | 7.50% | 1.25% | 1.25% | 1.25% | 1.25% | 2.50% | 2.50% | 10.00% | 10.00% | 5.00% | 35.00% | **Clueless** |
-| **AVG** | **3.66%** | **3.66%** | **3.66%** | **3.66%** | **7.32%** | **7.32%** | **5.00%** | **5.00%** | **5.00%** | **5.00%** | **10.00%** | **10.00%** | **5.43%** | **5.43%** | **2.71%** | **17.14%** | **100%** |
+## Memory Engine (`engine.py`)
 
-**Legend:**
-- **(Inc)** = Generated from Incriminating memory type
-- **(Misl)** = Generated from Misleading memory type
-- **Social Guilty/Lovers/Innocent** = Generated from Social memory type
+Hierarchical memory generation with weighted category selection:
+
+```
+recall_player_memory(crime, guilty, innocent, lovers, weights)
+    ↓
+weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
+    ↓
+    ├─ INCRIMINATING (4 equal categories @ 25% each)
+    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
+    │   │   └─ [weapon_noise_memory(1), weapon_evidence_memory(1)]
+    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
+    │   │   └─ [room_noise_memory(1), room_evidence_memory(1)]
+    │   ├─ Category 3: MOVEMENT (25%)
+    │   │   └─ movement_memory(guilty, innocent, 1)
+    │   └─ Category 4: SOCIAL (25%)
+    │       └─ incrim_social_memory(guilty)
+    │
+    ├─ MISLEADING (4 equal categories @ 25% each)
+    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
+    │   │   └─ [weapon_noise_memory(0), weapon_evidence_memory(0)]
+    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
+    │   │   └─ [room_noise_memory(0), room_evidence_memory(0)]
+    │   ├─ Category 3: MOVEMENT (25%)
+    │   │   └─ movement_memory(guilty, innocent, 0)
+    │   └─ Category 4: SOCIAL (25%)
+    │       └─ mislead_social_memory(innocent[0], innocent[1])
+    │
+    ├─ SOCIAL (3 weighted categories)
+    │   ├─ Category 1: GUILTY (40%)
+    │   │   └─ incrim_social_memory(guilty)
+    │   ├─ Category 2: LOVERS (40%)
+    │   │   └─ lover_social_memory(lovers)
+    │   └─ Category 3: INNOCENT (20%)
+    │       └─ mislead_social_memory(innocent[0], innocent[1])
+    │
+    └─ RANDOM (100%)
+        └─ random_memory()
+```
+
+### 14 Memory Type Probabilities by Role
+
+| Role | WPN Noise Inc | WPN Evid Inc | RM Noise Inc | RM Evid Inc | Mov Inc | SOC Guilty | WPN Noise Misl | WPN Evid Misl | RM Noise Misl | RM Evid Misl | Mov Misl | SOC Innocent | SOC Lovers | Random |
+|------|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Culprit | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 10.0% | 10.0% | 10.0% | 10.0% | 20.0% | 20.0% | 0.0% | 20.0% |
+| Accomplice | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 2.5% | 8.8% | 8.8% | 8.8% | 8.8% | 17.5% | 17.5% | 0.0% | 20.0% |
+| Detective | 8.8% | 8.8% | 8.8% | 8.8% | 17.5% | 17.5% | 2.5% | 2.5% | 2.5% | 2.5% | 5.0% | 5.0% | 0.0% | 10.0% |
+| Lover | 5.6% | 5.6% | 5.6% | 5.6% | 11.2% | 11.2% | 4.4% | 4.4% | 4.4% | 4.4% | 8.8% | 8.8% | 0.0% | 20.0% |
+| Rival | 3.1% | 3.1% | 3.1% | 3.1% | 6.2% | 8.2% | 6.9% | 6.9% | 6.9% | 6.9% | 13.8% | 14.8% | 2.0% | 15.0% |
+| Gossip | 3.1% | 3.1% | 3.1% | 3.1% | 6.2% | 30.2% | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 14.5% | 24.0% | 5.0% |
+| Clueless | 3.8% | 3.8% | 3.8% | 3.8% | 7.5% | 17.5% | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 7.5% | 10.0% | 35.0% |
+| AVG | 3.7% | 3.7% | 3.7% | 3.7% | 7.3% | 12.5% | 5.0% | 5.0% | 5.0% | 5.0% | 10.0% | 12.6% | 5.1% | 17.9% |
+
+## Memory Engine (`engine.py`)
+
+Hierarchical memory generation with weighted category selection:
+
+```
+recall_player_memory(crime, guilty, innocent, lovers, weights)
+    ↓
+weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
+    ↓
+    ├─ INCRIMINATING (4 equal categories @ 25% each)
+    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
+    │   │   └─ [weapon_noise_memory(1), weapon_evidence_memory(1)]
+    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
+    │   │   └─ [room_noise_memory(1), room_evidence_memory(1)]
+    │   ├─ Category 3: MOVEMENT (25%)
+    │   │   └─ movement_memory(guilty, innocent, 1)
+    │   └─ Category 4: SOCIAL (25%)
+    │       └─ incrim_social_memory(guilty)
+    │
+    ├─ MISLEADING (4 equal categories @ 25% each)
+    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
+    │   │   └─ [weapon_noise_memory(0), weapon_evidence_memory(0)]
+    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
+    │   │   └─ [room_noise_memory(0), room_evidence_memory(0)]
+    │   ├─ Category 3: MOVEMENT (25%)
+    │   │   └─ movement_memory(guilty, innocent, 0)
+    │   └─ Category 4: SOCIAL (25%)
+    │       └─ mislead_social_memory(innocent[0], innocent[1])
+    │
+    ├─ SOCIAL (3 weighted categories)
+    │   ├─ Category 1: GUILTY (40%)
+    │   │   └─ incrim_social_memory(guilty)
+    │   ├─ Category 2: LOVERS (40%)
+    │   │   └─ lover_social_memory(lovers)
+    │   └─ Category 3: INNOCENT (20%)
+    │       └─ mislead_social_memory(innocent[0], innocent[1])
+    │
+    └─ RANDOM (100%)
+        └─ random_memory()
+```
 
 ### Example of Each 14 Memory Type
 
