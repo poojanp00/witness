@@ -1,6 +1,6 @@
 # Witness: A Deduction Party Game
 
-A social deduction game where players take on different roles to uncover clues about a "crime" based on their character's perspective and biases. Each player generates personalized clues matching their role's personality and objectives.
+A social deduction game where players take on different roles to uncover clues about a "crime" based on their character's perspective and biases. Each player generates personalized memories matching their role's personality and objectives.
 
 ---
 
@@ -19,18 +19,24 @@ A social deduction game where players take on different roles to uncover clues a
 ```
 witness/
 ├── main.py                    # Game initialization & role assignment
-├── index.html                 # Web UI (placeholder)
+├── app.py                     # Flask web server
+├── run.py                     # Flask launcher
+├── SETUP.md                   # Setup & running instructions
+├── frontend/
+│   └── index.html             # Nordic Noir web UI
 ├── game/
-│   ├── memories/
+│   ├── memory/
 │   │   ├── generators.py      # Memory generation functions
 │   │   └── engine.py          # Memory type selection & weighting
 │   ├── data/
 │   │   ├── artifacts.py       # ROLES, WEAPONS, ROOMS data
 │   │   └── fragments.py       # Sentence fragments for memory building
 │   └── utils/
-│       ├── time_utils.py      # Time phrase generation
+│       ├── time.py            # Time phrase generation
 │       ├── printer.py         # Game output formatting
 │       └── test.py            # Testing utilities
+└── scripts/
+    └── calculate_memory_probabilities.py  # Auto-generate probability tables
 ```
 
 ---
@@ -78,7 +84,7 @@ Crime scene locations with atmospheric details.
 
 | Room | Example Noises | Example Evidence |
 |------|----------------|------------------|
-| **courtyard** | "footsteps on wet stone", "heavy thud" | "wet stone footsteps", "dropped garden glove" |
+| **courtyard** | "footsteps on wet stone", "heavy thud" | "wet stone footprints", "dropped garden glove" |
 | **kitchen** | "knife pulled from rack", "water rushing" | "knife missing from rack", "cutting board left out" |
 | **library** | "pages rustling", "book falling", "whispers" | "book lying open", "papers scattered" |
 | **sauna** | "steam hissing", "towel thrown", "water splashing" | "steam filling air", "towel on floor" |
@@ -110,61 +116,67 @@ Players generate 5 personalized memories based on weighted random selection:
 
 | Function | Signature | Returns | Memory Prefix |
 |----------|-----------|---------|---------------|
-| `movement_memory()` | `(crime, guilty, innocent, flag)` | Person moving through locations | `INC_MOV` / `MISL_MOV` |
-| `weapon_noise_memory()` | `(crime, flag)` | Auditory weapon evidence | `INC_WPN_NSE` / `MISL_WPN_NSE` |
-| `weapon_evidence_memory()` | `(crime, flag)` | Visual weapon evidence | `INC_WPN_EVI` / `MISL_WPN_EVI` |
-| `room_noise_memory()` | `(crime, flag)` | Auditory room evidence | `INC_RM_NSE` / `MISL_RM_NSE` |
-| `room_evidence_memory()` | `(crime, flag)` | Visual room evidence | `INC_RM_EVI` / `MISL_RM_EVI` |
-| `incrim_social_memory()` | `(guilty)` | Guilty parties interacting | `INC_SOC` |
-| `lover_social_memory()` | `(lovers)` | Lovers interacting | `LOV_SOC` |
-| `mislead_social_memory()` | `(person_a, person_b)` | Innocent parties or solo interactions | `MISL_SOC` |
-| `random_memory()` | `()` | Unrelated nonsensical detail | `RAND` |
+| `movement_memory()` | `(crime, role, flag)` | Person moving through locations | `INC_MOV` / `MISL_MOV` |
+| `weapon_noise_memory()` | `(crime, role, flag)` | Auditory weapon evidence | `INC_WPN_NSE` / `MISL_WPN_NSE` |
+| `weapon_evidence_memory()` | `(crime, role, flag)` | Visual weapon evidence | `INC_WPN_EVI` / `MISL_WPN_EVI` |
+| `room_noise_memory()` | `(crime, role, flag)` | Auditory room evidence | `INC_RM_NSE` / `MISL_RM_NSE` |
+| `room_evidence_memory()` | `(crime, role, flag)` | Visual room evidence | `INC_RM_EVI` / `MISL_RM_EVI` |
+| `incrim_social_memory()` | `(crime, role)` | Guilty parties interacting | `INC_SOC` |
+| `lover_social_memory()` | `(crime, role)` | Lovers interacting | `LOV_SOC` |
+| `mislead_social_memory()` | `(crime, role)` | Innocent parties or solo interactions | `MISL_SOC` |
+| `random_memory()` | `(role)` | Unrelated nonsensical detail | `RAND` |
 
 **Flag meaning:**
 - `flag == 1`: Generate incriminating (truthful) memory
 - `flag == 0`: Generate misleading (false) memory
 
-**Memory Prefixes:** Each generated memory includes a label showing its type and category (e.g., `INC_MOV:`, `MISL_WPN_EVI:`, `LOV_SOC:`)
+**Role-Based Observation Tuning:**
+Functions `movement_memory()`, `weapon_evidence_memory()`, and `room_evidence_memory()` now use role-based observation clarity:
+- **Detective** → `OBS_CLEAR` (precise: "I distinctly noticed...")
+- **Clueless** → `OBS_VAGUE` (uncertain: "I think I saw...")
+- **Others** → Mix of both observation types
 
-### Memory Engine (`engine.py`)
+---
+
+## Memory Engine (`engine.py`)
 
 Hierarchical memory generation with weighted category selection:
 
 ```
-recall_player_memory(crime, guilty, innocent, lovers, weights)
+recall_player_memory(crime, weights, role)
     ↓
 weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
     ↓
     ├─ INCRIMINATING (4 equal categories @ 25% each)
     │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
-    │   │   └─ [weapon_noise_memory(1), weapon_evidence_memory(1)]
+    │   │   └─ [weapon_noise_memory(crime, role, 1), weapon_evidence_memory(crime, role, 1)]
     │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
-    │   │   └─ [room_noise_memory(1), room_evidence_memory(1)]
+    │   │   └─ [room_noise_memory(crime, role, 1), room_evidence_memory(crime, role, 1)]
     │   ├─ Category 3: MOVEMENT (25%)
-    │   │   └─ movement_memory(guilty, innocent, 1)
+    │   │   └─ movement_memory(crime, role, 1)
     │   └─ Category 4: SOCIAL (25%)
-    │       └─ incrim_social_memory(guilty)
+    │       └─ incrim_social_memory(crime, role)
     │
     ├─ MISLEADING (4 equal categories @ 25% each)
     │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
-    │   │   └─ [weapon_noise_memory(0), weapon_evidence_memory(0)]
+    │   │   └─ [weapon_noise_memory(crime, role, 0), weapon_evidence_memory(crime, role, 0)]
     │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
-    │   │   └─ [room_noise_memory(0), room_evidence_memory(0)]
+    │   │   └─ [room_noise_memory(crime, role, 0), room_evidence_memory(crime, role, 0)]
     │   ├─ Category 3: MOVEMENT (25%)
-    │   │   └─ movement_memory(guilty, innocent, 0)
+    │   │   └─ movement_memory(crime, role, 0)
     │   └─ Category 4: SOCIAL (25%)
-    │       └─ mislead_social_memory(innocent[0], innocent[1])
+    │       └─ mislead_social_memory(crime, role)
     │
     ├─ SOCIAL (3 weighted categories)
     │   ├─ Category 1: GUILTY (40%)
-    │   │   └─ incrim_social_memory(guilty)
+    │   │   └─ incrim_social_memory(crime, role)
     │   ├─ Category 2: LOVERS (40%)
-    │   │   └─ lover_social_memory(lovers)
+    │   │   └─ lover_social_memory(crime, role)
     │   └─ Category 3: INNOCENT (20%)
-    │       └─ mislead_social_memory(innocent[0], innocent[1])
+    │       └─ mislead_social_memory(crime, role)
     │
     └─ RANDOM (100%)
-        └─ random_memory()
+        └─ random_memory(role)
 ```
 
 ### 14 Memory Type Probabilities by Role
@@ -180,174 +192,26 @@ weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
 | Clueless | 3.8% | 3.8% | 3.8% | 3.8% | 7.5% | 17.5% | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 7.5% | 10.0% | 35.0% |
 | AVG | 3.7% | 3.7% | 3.7% | 3.7% | 7.3% | 12.5% | 5.0% | 5.0% | 5.0% | 5.0% | 10.0% | 12.6% | 5.1% | 17.9% |
 
-## Memory Engine (`engine.py`)
+---
 
-Hierarchical memory generation with weighted category selection:
-
-```
-recall_player_memory(crime, guilty, innocent, lovers, weights)
-    ↓
-weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
-    ↓
-    ├─ INCRIMINATING (4 equal categories @ 25% each)
-    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
-    │   │   └─ [weapon_noise_memory(1), weapon_evidence_memory(1)]
-    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
-    │   │   └─ [room_noise_memory(1), room_evidence_memory(1)]
-    │   ├─ Category 3: MOVEMENT (25%)
-    │   │   └─ movement_memory(guilty, innocent, 1)
-    │   └─ Category 4: SOCIAL (25%)
-    │       └─ incrim_social_memory(guilty)
-    │
-    ├─ MISLEADING (4 equal categories @ 25% each)
-    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
-    │   │   └─ [weapon_noise_memory(0), weapon_evidence_memory(0)]
-    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
-    │   │   └─ [room_noise_memory(0), room_evidence_memory(0)]
-    │   ├─ Category 3: MOVEMENT (25%)
-    │   │   └─ movement_memory(guilty, innocent, 0)
-    │   └─ Category 4: SOCIAL (25%)
-    │       └─ mislead_social_memory(innocent[0], innocent[1])
-    │
-    ├─ SOCIAL (3 weighted categories)
-    │   ├─ Category 1: GUILTY (40%)
-    │   │   └─ incrim_social_memory(guilty)
-    │   ├─ Category 2: LOVERS (40%)
-    │   │   └─ lover_social_memory(lovers)
-    │   └─ Category 3: INNOCENT (20%)
-    │       └─ mislead_social_memory(innocent[0], innocent[1])
-    │
-    └─ RANDOM (100%)
-        └─ random_memory()
-```
-
-### 14 Memory Type Probabilities by Role
-
-| Role | WPN Noise Inc | WPN Evid Inc | RM Noise Inc | RM Evid Inc | Mov Inc | SOC Guilty | WPN Noise Misl | WPN Evid Misl | RM Noise Misl | RM Evid Misl | Mov Misl | SOC Innocent | SOC Lovers | Random |
-|------|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Culprit | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 10.0% | 10.0% | 10.0% | 10.0% | 20.0% | 20.0% | 0.0% | 20.0% |
-| Accomplice | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 2.5% | 8.8% | 8.8% | 8.8% | 8.8% | 17.5% | 17.5% | 0.0% | 20.0% |
-| Detective | 8.8% | 8.8% | 8.8% | 8.8% | 17.5% | 17.5% | 2.5% | 2.5% | 2.5% | 2.5% | 5.0% | 5.0% | 0.0% | 10.0% |
-| Lover | 5.6% | 5.6% | 5.6% | 5.6% | 11.2% | 11.2% | 4.4% | 4.4% | 4.4% | 4.4% | 8.8% | 8.8% | 0.0% | 20.0% |
-| Rival | 3.1% | 3.1% | 3.1% | 3.1% | 6.2% | 8.2% | 6.9% | 6.9% | 6.9% | 6.9% | 13.8% | 14.8% | 2.0% | 15.0% |
-| Gossip | 3.1% | 3.1% | 3.1% | 3.1% | 6.2% | 30.2% | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 14.5% | 24.0% | 5.0% |
-| Clueless | 3.8% | 3.8% | 3.8% | 3.8% | 7.5% | 17.5% | 1.2% | 1.2% | 1.2% | 1.2% | 2.5% | 7.5% | 10.0% | 35.0% |
-| AVG | 3.7% | 3.7% | 3.7% | 3.7% | 7.3% | 12.5% | 5.0% | 5.0% | 5.0% | 5.0% | 10.0% | 12.6% | 5.1% | 17.9% |
-
-## Memory Engine (`engine.py`)
-
-Hierarchical memory generation with weighted category selection:
-
-```
-recall_player_memory(crime, guilty, innocent, lovers, weights)
-    ↓
-weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
-    ↓
-    ├─ INCRIMINATING (4 equal categories @ 25% each)
-    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
-    │   │   └─ [weapon_noise_memory(1), weapon_evidence_memory(1)]
-    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
-    │   │   └─ [room_noise_memory(1), room_evidence_memory(1)]
-    │   ├─ Category 3: MOVEMENT (25%)
-    │   │   └─ movement_memory(guilty, innocent, 1)
-    │   └─ Category 4: SOCIAL (25%)
-    │       └─ incrim_social_memory(guilty)
-    │
-    ├─ MISLEADING (4 equal categories @ 25% each)
-    │   ├─ Category 1: WEAPON (25%) → 50/50 Noise or Evidence
-    │   │   └─ [weapon_noise_memory(0), weapon_evidence_memory(0)]
-    │   ├─ Category 2: ROOM (25%) → 50/50 Noise or Evidence
-    │   │   └─ [room_noise_memory(0), room_evidence_memory(0)]
-    │   ├─ Category 3: MOVEMENT (25%)
-    │   │   └─ movement_memory(guilty, innocent, 0)
-    │   └─ Category 4: SOCIAL (25%)
-    │       └─ mislead_social_memory(innocent[0], innocent[1])
-    │
-    ├─ SOCIAL (3 weighted categories)
-    │   ├─ Category 1: GUILTY (40%)
-    │   │   └─ incrim_social_memory(guilty)
-    │   ├─ Category 2: LOVERS (40%)
-    │   │   └─ lover_social_memory(lovers)
-    │   └─ Category 3: INNOCENT (20%)
-    │       └─ mislead_social_memory(innocent[0], innocent[1])
-    │
-    └─ RANDOM (100%)
-        └─ random_memory()
-```
-
-### Example of Each 14 Memory Type
+## Example of Each 14 Memory Type
 
 | # | Memory Type | Prefix | Example |
 |---|---|---|---|
 | 1 | Weapon Noise (Incriminating) | `INC_WPN_NSE` | "I heard a thud moments after 21:55." |
-| 2 | Weapon Evidence (Incriminating) | `INC_WPN_EVI` | "I saw someone slipping something into a glass near the ballroom." |
+| 2 | Weapon Evidence (Incriminating) | `INC_WPN_EVI` | "I distinctly noticed someone holding something metallic." |
 | 3 | Room Noise (Incriminating) | `INC_RM_NSE` | "I heard a muffled gasp." |
 | 4 | Room Evidence (Incriminating) | `INC_RM_EVI` | "I noticed scuff marks on the floor precisely at 21:55." |
-| 5 | Movement (Incriminating) | `INC_MOV` | "I noticed Diya leaving the area at 21:55." |
+| 5 | Movement (Incriminating) | `INC_MOV` | "I distinctly noticed Diya leaving the area at 21:55." |
 | 6 | Weapon Noise (Misleading) | `MISL_WPN_NSE` | "I heard a loud bang in the ballroom." |
-| 7 | Weapon Evidence (Misleading) | `MISL_WPN_EVI` | "I saw a flash from a muzzle moments before 21:50." |
+| 7 | Weapon Evidence (Misleading) | `MISL_WPN_EVI` | "I think I saw a flash from a muzzle moments before 21:50." |
 | 8 | Room Noise (Misleading) | `MISL_RM_NSE` | "I heard a chair scraping against the floor." |
-| 9 | Room Evidence (Misleading) | `MISL_RM_EVI` | "I noticed broken glass in the garden." |
-| 10 | Movement (Misleading) | `MISL_MOV` | "I caught a glimpse of someone standing near the room not long after 21:52." |
+| 9 | Room Evidence (Misleading) | `MISL_RM_EVI` | "I think I noticed broken glass in the garden." |
+| 10 | Movement (Misleading) | `MISL_MOV` | "I think I caught a glimpse of someone standing near the room." |
 | 11 | Social - Guilty | `INC_SOC` | "Baa didn't want anyone noticing them with Diya sometime in the night." |
 | 12 | Social - Lovers | `LOV_SOC` | "Sarah and Tom were whispering together just before the incident." |
 | 13 | Social - Innocent | `MISL_SOC` | "Shalini seemed to be nursing a very stiff drink." |
 | 14 | Random | `RAND` | "I heard laughter from another room later in the evening." |
-
-**Note:** Social memory types (Guilty, Lovers, Innocent) can appear from both their source memory type AND the Social memory type category, so they have multiple pathways to selection, but only 1 unique prefix + function per type.
-
-### Memory Data Structure
-
-Each memory is returned as a tuple `(text, type)` from generator functions and stored as a dictionary:
-
-```python
-{
-    "text": "I heard a gunshot near the ballroom.",
-    "type": "INC_WPN_NSE"
-}
-```
-
-**Storage Format in Game:**
-- `recall_player_memory()` returns: `(memory_text: str, memory_type: str)`
-- `initialize_game()` stores as: `{"text": memory_text, "type": memory_type}`
-- Each player receives 5 personalized memories matching their role's weights
-
-**Display Control:**
-
-Use `format_memories()` with `show_type` parameter to toggle memory type display:
-
-```python
-# With types (default)
-format_memories((crime, memories), verbose=True, show_type=True)
-
-# Without types
-format_memories((crime, memories), verbose=True, show_type=False)
-```
-
-**Example output with types:**
-```
-DIYA
-  1. [INC_WPN_EVI] I saw someone slipping something into a glass near the ballroom.
-  2. [MISL_MOV] I think I saw a silhouette hiding near the scene.
-  3. [INC_SOC] Baa didn't want anyone noticing them with Shalini.
-```
-
-**Example output without types:**
-```
-DIYA
-  1. I saw someone slipping something into a glass near the ballroom.
-  2. I think I saw a silhouette hiding near the scene.
-  3. Baa didn't want anyone noticing them with Shalini.
-```
-
-**Using main():**
-```python
-# Run with types shown
-main(show_types=True)
-
-# Run with types hidden
-main(show_types=False)
-```
 
 ---
 
@@ -358,7 +222,7 @@ main(show_types=False)
 ```
 assign_roles(players)
     ↓
-Role Pool: [detective, culprit, accomplice, lover, lover, rival, gossip, accomplice, clueless, clueless]
+Role Pool: [detective, culprit, accomplice, lover, lover, rival, gossip, clueless, clueless]
     ↓
 Shuffle & assign to each player
     ↓
@@ -367,24 +231,27 @@ Link lovers together
 Assign rival targets
 ```
 
-**Role Distribution (default 10 players):**
+**Default 8 players (Poojan, Diya, Kishan, Shalini, Sonal, Sandeep, Baa, Bronnie):**
 - 1 Detective
 - 1 Culprit
-- 2 Accomplices
+- 1-2 Accomplices
 - 2 Lovers
 - 1 Rival
 - 1 Gossip
-- 2 Clueless
+- 1-2 Clueless
 
 ### 2. Crime Generation
 
 ```
 generate_crime(assignments)
     ↓
-culprit: [assigned detective's enemy]
+culprit: Assigned detective's enemy or random culprit
 weapon: random from WEAPONS.keys()
 room: random from ROOMS.keys()
 time: random_time()
+guilty: [culprit, accomplices]
+innocent: [all other players]
+lovers: [lover pairs]
 ```
 
 ### 3. Memory Generation
@@ -393,120 +260,115 @@ For each player, generate 5 memories:
 ```
 for player in players:
     memories[player] = [
-        recall_player_memory(crime, guilty, innocent, lovers, player.weights)
+        recall_player_memory(crime, player.weights, player.role)
         for _ in range(5)
     ]
 ```
 
-Each call to `recall_player_memory()` uses the player's role-based weights to decide memory type, then generates a contextually appropriate memory.
+Each call to `recall_player_memory()` uses the player's role-based weights to decide memory type, then generates a contextually appropriate memory using role-aware observation clarity.
+
+---
+
+## Web Frontend
+
+### Architecture
+
+The frontend is a responsive single-page application (SPA) built with:
+- **HTML/CSS/JS**: Nordic Noir aesthetic (dark, minimalist)
+- **Backend Integration**: Flask REST API
+- **Memory Cards**: 3D CSS flip animations
+
+### Key Features
+
+- **Login View**: Players enter their name to join the game
+- **Dossier View**: Shows player role and atmospheric flavor text
+- **Memory Card Grid**: 5 interactive cards with flip animations
+- **Role Descriptions**: Narrative flavor text for each role
+- **Responsive Design**: Works on mobile, tablet, and desktop
+- **3D Card Flip**: Smooth CSS transitions with border change on flip
+
+### API Endpoints
+
+- `GET /` - Serve frontend (index.html)
+- `GET /api/game/initialize` - Initialize new game
+- `GET /api/game/player/<name>` - Get player-specific game data
+- `GET /api/game/state` - Get current game state with available players
 
 ---
 
 ## Running the Game
 
+### Backend
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run Flask server
+source venv/bin/activate
+python run.py
+```
+
+Server runs on `http://localhost:5000`
+
+### CLI (No Web)
+
 ```bash
 python main.py
 ```
 
-**Output:**
-- Game assignments (player → role mapping)
-- Crime details (weapon, room, time)
-- Personalized clue lists for each player
+Outputs game state with all assignments and memories to terminal.
 
 ---
 
 ## Recent Changes & Refactoring
 
-### Terminology: "Clue" → "Memory"
-- Renamed all terminology from "clue" to "memory" throughout codebase
-- File path: `game/clues/` → `game/memories/`
-- Function imports updated in `main.py`
-- Variable naming: `player_clues` → `player_memories`
+### Folder & File Renaming
+- `game/memories/` → `game/memory/` (singular form)
+- `game/utils/time_utils.py` → `game/utils/time.py`
+- All imports updated accordingly
 
-### Role Data Structure
-- Added `persona` field to each role (e.g., "The Keen Observer", "The Master of Puppets")
-- Updated Detective weights from `80/20/0/10` to **`70/20/0/10`** to sum to 100%
-- All weights now properly sum to 100%
+### Function Signature Updates
+- All memory generator functions now take `role` as second parameter
+- New signature: `generator(crime, role, flag)` instead of `(crime, flag)`
+- Enables role-based narrative tuning
 
-### ROOMS/WEAPONS Structure Unification
-- **ROOMS:** Transformed from flat list to nested dict with `noises` and `evidence` fields
-- Matches WEAPONS structure exactly (both have `noises` and `evidence` keys)
-- **WEAPONS:** Renamed `sights` field to `evidence` for consistency
-- All generator functions updated to reference the new structure
+### Role-Based Observation Clarity
+- `movement_memory()`, `weapon_evidence_memory()`, `room_evidence_memory()` now use:
+  - Detective → `OBS_CLEAR` (sharp, precise observations)
+  - Clueless → `OBS_VAGUE` (uncertain, blurry memories)
+  - Others → Mix of both
+- Added new imports: `OBS_CLEAR`, `OBS_VAGUE` from `fragments.py`
 
-### Memory Generator Functions
-- **Split social_memory():** Original single function split into 3 specialized functions:
-  - `incrim_social_memory(guilty)` - Guilty party interactions
-  - `lover_social_memory(lovers)` - Lover interactions
-  - `mislead_social_memory(person_a, person_b)` - Innocent/other interactions
-- Fixed `random.shuffle()` bug: Changed to `random.sample()` for proper list sampling
-- Added memory output prefixes for clarity:
-  - `INC_MOV`, `INC_WPN_NSE`, `INC_WPN_EVI`, `INC_RM_NSE`, `INC_RM_EVI`, `INC_SOC` (Incriminating)
-  - `MISL_MOV`, `MISL_WPN_NSE`, `MISL_WPN_EVI`, `MISL_RM_NSE`, `MISL_RM_EVI`, `MISL_SOC` (Misleading)
-  - `LOV_SOC` (Lover), `RAND` (Random)
+### Social Memory Refactoring
+- Split original `social_memory()` into 3 specialized functions:
+  - `incrim_social_memory(crime, role)` - Guilty party interactions
+  - `lover_social_memory(crime, role)` - Lover interactions
+  - `mislead_social_memory(crime, role)` - Innocent/other interactions
+- Crime dict now contains `guilty`, `innocent`, `lovers` lists
 
-### Hierarchical Memory Generation
-- **Incriminating & Misleading:** Refactored to 4 equal categories (25% each):
-  1. **Weapon** (25%) → 50/50 split between Noise (12.5%) and Evidence (12.5%)
-  2. **Room** (25%) → 50/50 split between Noise (12.5%) and Evidence (12.5%)
-  3. **Movement** (25%)
-  4. **Social** (25%) - Guilty for incriminating, Innocent for misleading
+### Time Constant Enforcement
+- `TIMES1` (exact timing) only used in `flag == 1` (incriminating) branches
+- `TIMES2+TIMES3` (vague/wrong timing) only in `flag == 0` (misleading) branches
+- Prevents information leakage through temporal precision
 
-- **Social Memory Type:** 3-way weighted split (40/40/20):
-  1. **Guilty Interactions** (40%)
-  2. **Lover Interactions** (40%)
-  3. **Innocent Interactions** (20%)
+### Web Integration
+- Created `app.py` - Flask REST API server with lazy initialization
+- Created `run.py` - Simple launcher script
+- Created `frontend/index.html` - Nordic Noir-themed web UI
+- Lazy game initialization to avoid startup delays
 
-- **Probability Movement:** Social memory type branching logic moved from generator function to engine level, matching incriminating/misleading pattern
-
-### Variable Naming
-- Standardized local variables to use `mem`/`mems` shorthand instead of `clue`/`clues`
-- Consistent naming across all memory generators and engine
-
----
-
-## Example Output
-
-```json
-{
-  "crime": {
-    "culprit": "Poojan",
-    "weapon": "knife",
-    "room": "kitchen",
-    "time": "11:47 PM"
-  },
-  "Poojan_memories": [
-    "INC_WPN_NSE: I heard a scream near the kitchen.",
-    "INC_WPN_EVI: I saw a flash of metal 2 minutes before midnight.",
-    "INC_RM_EVI: I noticed a knife missing from the rack.",
-    "MISL_MOV: I saw Sarah running through the library 3 minutes before the witching hour.",
-    "RAND: I felt a sudden chill around midnight."
-  ],
-  "Detective_memories": [
-    "INC_WPN_EVI: I saw someone hiding a knife.",
-    "INC_RM_NSE: I heard strange sounds in the kitchen around 11:47 PM.",
-    "INC_MOV: I observed the culprit near the kitchen.",
-    "LOV_SOC: Sarah and Tom were whispering together just before the incident.",
-    "MISL_WPN_NSE: I heard a gunshot near the library."
-  ],
-  "Culprit_memories": [
-    "MISL_WPN_NSE: I heard a loud bang in the ballroom.",
-    "MISL_RM_EVI: I noticed broken glass in the garden.",
-    "MISL_MOV: I saw the detective running toward the wine cellar.",
-    "MISL_WPN_EVI: I saw a rope in someone's hand.",
-    "RAND: The music seemed to stop at exactly midnight."
-  ]
-}
-```
-
-**Memory Format:** Each memory includes a prefix label indicating its type and category (e.g., `INC_WPN_EVI:` = Incriminating, Weapon, Evidence).
+### Crime Dict Consolidation
+- Crime object now carries: `culprit`, `weapon`, `room`, `time`, `guilty`, `innocent`, `lovers`
+- Eliminates need to pass separate parameters to memory generators
+- All data accessible via single `crime` dict
 
 ---
 
 ## Next Steps
 
-- [ ] Implement web UI (index.html → game state/display)
-- [ ] Add voting/accusation mechanics
+- [ ] Implement voting/accusation mechanics
 - [ ] Implement reveal and win conditions
 - [ ] Add game persistence (JSON file storage)
 - [ ] Create multiplayer networking (WebSocket)
+- [ ] Add game history and leaderboards

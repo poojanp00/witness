@@ -1,8 +1,8 @@
 import random
 import json
 from game.data.artifacts import ROLES, WEAPONS, ROOMS
-from game.memories.engine import recall_player_memory
-from game.utils.time_utils import random_time
+from game.memory.engine import recall_player_memory
+from game.utils.time import random_time
 from game.utils.printer import printer
 
 # -----------------------------
@@ -33,7 +33,7 @@ def generate_crime(assignments):
     }
 
 def assign_roles(players):
-    role_pool = ["detective", "culprit", "accomplice", "lover", "lover", "rival", "gossip", "accomplice", "clueless", "clueless"]
+    role_pool = ["detective", "culprit", "accomplice", "lover", "lover", "rival", "gossip", "clueless", "clueless"]
     # If you have fewer than 10 players, trim the pool
     role_pool = role_pool[:len(players)]
     
@@ -95,7 +95,7 @@ def main():
         crime: Crime details (weapon, room, time)
         memories: Player memories dict
     """
-    players = ["Poojan", "Diya", "Kishan", "Shalini", "Sonal", "Sandeep", "Baa"]
+    players = ["Poojan", "Diya", "Kishan", "Shalini", "Sonal", "Sandeep", "Baa", "Bronnie"]
 
     assignments = assign_roles(players)
     crime, memories = initialize_game(assignments)

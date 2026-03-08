@@ -2,17 +2,36 @@
 # FRAGMENTS
 # -----------------------------
 
-OBSERVATIONS = [
+OBS_CLEAR = [
     "saw",
+    "clearly saw",
+    "definitely saw",
+    "noticed",
+    "clearly noticed",
+    "spotted",
+    "clearly spotted",
+    "observed",
+    "remember seeing",
+    "caught sight of",
+    "clearly caught sight of",
+    "witnessed",
+    "saw with my own eyes",
+]
+
+OBS_VAGUE = [
     "think I saw",
     "could have sworn I saw",
     "might be mistaken but I saw",
-    "caught a glimpse of",
-    "remember seeing",
     "might have seen",
-    "noticed",
-    "briefly noticed",
-    "clearly remember",
+    # "’m not totally sure, but I saw",
+    "vaguely remember noticing",
+    # "’m pretty sure I caught a glimpse of",
+    "could be wrong, but I saw",
+    "might have imagined it, but I noticed",
+    # "’m not certain, but I think I saw",
+    "think I spotted",
+    "remember seeing",
+    "saw"
 ]
 
 SUBJECTS = [

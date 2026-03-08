@@ -4,7 +4,7 @@
 
 import random
 
-from game.memories.generators import room_noise_memory, room_evidence_memory, movement_memory, weapon_noise_memory, weapon_evidence_memory, random_memory, incrim_social_memory, lover_social_memory, mislead_social_memory
+from game.memory.generators import room_noise_memory, room_evidence_memory, movement_memory, weapon_noise_memory, weapon_evidence_memory, random_memory, incrim_social_memory, lover_social_memory, mislead_social_memory
 
 # -----------------------------
 # MEMORY TYPE PICKER

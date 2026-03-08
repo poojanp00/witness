@@ -5,10 +5,10 @@
 # Flag determines if clue should be incriminating or misleading. 
 # -------------------------------
 import random
-from game.data.fragments import OBSERVATIONS, SUBJECTS, AREAS, MOVEMENTS, GUILTY_SOCIAL, LOVER_SOCIAL, SOCIAL, SOLO_SOCIAL, RANDOMS, TIMES1, TIMES2, TIMES3
+from game.data.fragments import OBS_CLEAR, OBS_VAGUE, SUBJECTS, AREAS, MOVEMENTS, GUILTY_SOCIAL, LOVER_SOCIAL, SOCIAL, SOLO_SOCIAL, RANDOMS, TIMES1, TIMES2, TIMES3
 from game.data.artifacts import WEAPONS, ROOMS 
 
-from game.utils.time_utils import random_time
+from game.utils.time import random_time
 
 # -------------------------------
 # MOVEMENT MEMORY GENERATION
@@ -16,8 +16,14 @@ from game.utils.time_utils import random_time
 def movement_memory(crime, role, flag):
     guilty = crime["guilty"]
     innocent = crime["innocent"]
-    observation = random.choice(OBSERVATIONS)
     movement = random.choice(MOVEMENTS)
+
+    if role == "detective":
+        obs = random.choice(OBS_CLEAR)
+    elif role == "clueless":
+        obs = random.choice(OBS_VAGUE)
+    else:
+        obs = random.choice(OBS_CLEAR+OBS_VAGUE)
 
     if flag == 1: # INCRIMIINATING MEMORY
         room = crime["room"]
@@ -25,19 +31,24 @@ def movement_memory(crime, role, flag):
         time_phrase = random.choice(TIMES1).format(crime_time=crime["time"])
         area = random.choice(AREAS)
         mems = [
-            f"I {observation} {subject} {movement} the {room}.",
-            f"I {observation} {subject} {movement} {area} {time_phrase}."
+            f"I {obs} {subject} {movement} the {room}.",
+            f"I {obs} {subject} {movement} {area} {time_phrase}."
         ]
         return (random.choice(mems), "INC_MOV")
 
     else: # MISLEADING
+        if role == "clueless":
+            obs = random.choice(OBS_VAGUE)
+        else:
+            obs = random.choice(OBS_CLEAR+OBS_VAGUE)
+
         wrong_room = random.choice([r for r in ROOMS.keys() if r != crime["room"]])
         wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
         wrong_subject = random.choice(SUBJECTS + innocent)
         area = random.choice(AREAS)
         mems = [
-            f"I {observation} {wrong_subject} {movement} the {wrong_room}.",
-            f"I {observation} {wrong_subject} {movement} {area} {wrong_time}."
+            f"I {obs} {wrong_subject} {movement} the {wrong_room}.",
+            f"I {obs} {wrong_subject} {movement} {area} {wrong_time}."
         ]
         return (random.choice(mems), "MISL_MOV")
 
@@ -51,19 +62,21 @@ def weapon_noise_memory(crime, role, flag):
         time = random.choice(TIMES1).format(crime_time=crime["time"])
         mem = [
             f"I heard {noise} near the {room}.",
-            f"I heard {noise} {time}."
+            f"I heard {noise} {time}.",
+            f"I heard {noise}.",
         ]
         return (random.choice(mem), "INC_WPN_NSE")
 
     else: # MISLEADING MEMORY
         other_weapons = [w for w in WEAPONS.keys() if w != crime["weapon"]]
-        wrong_weapon = random.choice(other_weapons)
-        wrong_noise = random.choice(WEAPONS[wrong_weapon]["noises"])
-        wrong_room = random.choice([r for r in ROOMS if r != crime["room"]])
-        wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
+        weapon = random.choice(other_weapons)
+        noise = random.choice(WEAPONS[weapon]["noises"])
+        room = random.choice([r for r in ROOMS if r != crime["room"]])
+        time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
         mem = [
-            f"I heard {wrong_noise} near the {wrong_room}.",
-            f"I heard {wrong_noise} {wrong_time}."
+            f"I heard {noise} near the {room}.",
+            f"I heard {noise} {time}.",
+            f"I heard {noise}."
         ]
         return (random.choice(mem), "MISL_WPN_NSE")
 
@@ -72,24 +85,38 @@ def weapon_noise_memory(crime, role, flag):
 # -------------------------------
 def weapon_evidence_memory(crime, role, flag):
     if flag == 1: # INCRIMINATING MEMORY
+        if role == "detective":
+            obs = random.choice(OBS_CLEAR)
+        elif role == "clueless":
+            obs = random.choice(OBS_VAGUE)
+        else:
+            obs = random.choice(OBS_CLEAR+OBS_VAGUE)
+
         evidence = random.choice(WEAPONS[crime["weapon"]]["evidence"])
         room = crime["room"]
         time = random.choice(TIMES1).format(crime_time=crime["time"])
         mem = [
-            f"I saw {evidence} near the {room}.",
-            f"I saw {evidence} {time}.",
+            f"I {obs} {evidence} near the {room}.",
+            f"I {obs} {evidence}.",
+            f"I {obs} {evidence} {time}.",
         ]
         return (random.choice(mem), "INC_WPN_EVI")
 
     else: # MISLEADING MEMORY
+        if role == "clueless":
+            obs = random.choice(OBS_VAGUE)
+        else:
+            obs = random.choice(OBS_CLEAR+OBS_VAGUE)
+
         other_weapons = [w for w in WEAPONS if w != crime["weapon"]]
         wrong_weapon = random.choice(other_weapons)
         evidence = random.choice(WEAPONS[wrong_weapon]["evidence"])
-        wrong_room = random.choice([r for r in ROOMS if r != crime["room"]])
-        wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
+        room = random.choice([r for r in ROOMS if r != crime["room"]])
+        time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
         mem = [
-            f"I saw {evidence} near the {wrong_room}.",
-            f"I saw {evidence} {wrong_time}."
+            f"I {obs} {evidence} near the {room}.",
+            f"I {obs} {evidence}."
+            f"I {obs} {evidence} {time}."
         ]
         return (random.choice(mem), "MISL_WPN_EVI")
     
@@ -122,22 +149,35 @@ def room_noise_memory(crime, role, flag):
 # -------------------------------
 def room_evidence_memory(crime, role, flag):
     if flag == 1: # INCRIMINATING MEMORY
+        if role == "detective":
+            observation = random.choice(OBS_CLEAR)
+        elif role == "clueless":
+            observation = random.choice(OBS_VAGUE)
+        else:
+            observation = random.choice(OBS_CLEAR+OBS_VAGUE)
+
         evidence = random.choice(ROOMS[crime["room"]]["evidence"])
-        room = crime["room"]
+        area = random.choice(AREAS)
         time = random.choice(TIMES1).format(crime_time=crime["time"])
         mem = [
-            f"I noticed {evidence} by the {room}.",
-            f"I noticed {evidence} {time}."
+            f"I {observation} {evidence} around {area}.",
+            f"I {observation} {evidence} {time}."
+
         ]
         return (random.choice(mem), "INC_RM_EVI")
 
     else: # MISLEADING MEMORY
+        if role == "clueless":
+            observation = random.choice(OBS_VAGUE)
+        else:
+            observation = random.choice(OBS_CLEAR+OBS_VAGUE)
         wrong_room = random.choice([r for r in ROOMS if r != crime["room"]])
+        area = random.choice(AREAS)
         wrong_evidence = random.choice(ROOMS[wrong_room]["evidence"])
-        wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
+        time = random.choice(TIMES2+TIMES3).format(crime_time=crime["time"])
         mem = [
-            f"I noticed {wrong_evidence} by the {wrong_room}.",
-            f"I noticed {wrong_evidence} {wrong_time}."
+            f"I {observation} {wrong_evidence} around {area}.",
+            f"I {observation} {wrong_evidence} {time}."
         ]
         return (random.choice(mem), "MISL_RM_EVI")
     
