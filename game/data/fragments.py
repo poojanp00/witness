@@ -37,7 +37,6 @@ MOVEMENTS = [
 ]
 
 AREAS = [
-    "the premises",
     "the scene",
     "the area",
     "the room"
@@ -77,6 +76,14 @@ SOCIAL = [
     "ran into",
     "was standing near",
     "was laughing with"
+]
+
+SOLO_SOCIAL = [
+    "was checking their phone frequently",
+    "seemed to be nursing a very stiff drink",
+    "was frantically searching through their pockets",
+    "was muttering something under their breath",
+    "was brushing something off their sleeve",
 ]
 
 

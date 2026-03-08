@@ -12,9 +12,9 @@ ROLES = {
         "objective": "Survive the votes. Deflect suspicion toward the Rivals or the innocent guests.",
         "weights": {
             "incriminating": 0,
-            "social": 25,
-            "misleading": 55,
-            "random": 15
+            "social": 0,
+            "misleading": 80,
+            "random": 20
         }
     },
     "accomplice": {
@@ -24,9 +24,9 @@ ROLES = {
         "objective": "Keep the heat off the Culprit by flooding the conversation with red herrings.",
         "weights": {
             "incriminating": 10,
-            "social": 35,
-            "misleading": 50,
-            "random": 5
+            "social": 0,
+            "misleading": 70,
+            "random": 20
         }
     },
     "detective": {
@@ -35,8 +35,8 @@ ROLES = {
         "strategy": "You are the most reliable person in this room. Your memories are highly accurate and often pinpoint the specific location, weapon, or movements of the culprit.",
         "objective": "Filter out the gossip and lead the group toward the truth—but be careful, the culprit knows you are the biggest threat.",
         "weights": {
-            "incriminating": 50,
-            "social": 20,
+            "incriminating": 70,
+            "social": 0,
             "misleading": 20,
             "random": 10
         }
@@ -47,10 +47,10 @@ ROLES = {
         "strategy": "You are observant but biased. You pay close attention to the people you care about, which gives you good insight, but you might unintentionally ignore the truth if it hurts someone you love.",
         "objective": "Share what you know, but decide for yourself who is worth protecting.",
         "weights": {
-            "incriminating": 30,
-            "social": 40,
-            "misleading": 15,
-            "random": 15
+            "incriminating": 45,
+            "social": 0,
+            "misleading": 35,
+            "random": 20
         }
     },
     "rival": {
@@ -60,8 +60,8 @@ ROLES = {
         "objective": "Use the chaos to settle old scores, even if it means the real killer walks free.",
         "weights": {
             "incriminating": 25,
-            "social": 15,
-            "misleading": 45,
+            "social": 5,
+            "misleading": 55,
             "random": 15
         }
     },
@@ -72,9 +72,9 @@ ROLES = {
         "objective": "Keep the conversation moving and piece together the social web of the night.",
         "weights": {
             "incriminating": 25,
-            "social": 35,
-            "misleading": 25,
-            "random": 15
+            "social": 65,
+            "misleading": 10,
+            "random": 0
         }
     },
     "clueless": {
@@ -83,8 +83,8 @@ ROLES = {
         "strategy": "You are unpredictable. Your memories are a hazy mix of vital truths and completely random nonsense. You don't know what's important and what isn't.",
         "objective": "Share everything you saw, no matter how small or silly it seems. The Detective might find the gold in your grit.",
         "weights": {
-            "incriminating": 35,
-            "social": 20,
+            "incriminating": 30,
+            "social": 25,
             "misleading": 10,
             "random": 35
         }

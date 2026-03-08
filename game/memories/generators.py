@@ -5,7 +5,7 @@
 # Flag determines if clue should be incriminating or misleading. 
 # -------------------------------
 import random
-from game.data.fragments import OBSERVATIONS, SUBJECTS, AREAS, MOVEMENTS, GUILTY_SOCIAL, LOVER_SOCIAL, SOCIAL, RANDOMS, TIMES1, TIMES2, TIMES3
+from game.data.fragments import OBSERVATIONS, SUBJECTS, AREAS, MOVEMENTS, GUILTY_SOCIAL, LOVER_SOCIAL, SOCIAL, SOLO_SOCIAL, RANDOMS, TIMES1, TIMES2, TIMES3
 from game.data.artifacts import WEAPONS, ROOMS 
 
 from game.utils.time_utils import random_time
@@ -23,8 +23,8 @@ def movement_memory(crime, guilty, innocent, flag):
         time_phrase = random.choice(TIMES1).format(crime_time=crime["time"])
         area = random.choice(AREAS)
         mems = [
-            f"I {observation} {subject} {movement} the {room}.",
-            f"I {observation} {subject} {movement} {area} {time_phrase}."
+            f"INC_MOV: I {observation} {subject} {movement} the {room}.",
+            f"INC_MOV: I {observation} {subject} {movement} {area} {time_phrase}."
         ]
         return random.choice(mems)
 
@@ -34,8 +34,8 @@ def movement_memory(crime, guilty, innocent, flag):
         wrong_subject = random.choice(SUBJECTS + innocent)
         area = random.choice(AREAS)
         mems = [
-            f"I {observation} {wrong_subject} {movement} the {wrong_room}.",
-            f"I {observation} {wrong_subject} {movement} {area} {wrong_time}."
+            f"MISL_MOV: I {observation} {wrong_subject} {movement} the {wrong_room}.",
+            f"MISL_MOV: I {observation} {wrong_subject} {movement} {area} {wrong_time}."
         ]
         return random.choice(mems)
 
@@ -48,8 +48,8 @@ def weapon_noise_memory(crime, flag):
         room = crime["room"]
         time = random.choice(TIMES1).format(crime_time=crime["time"])
         mem = [
-            f"NOISE_INC: I heard {noise} near the {room}.",
-            f"NOISE_INC: I heard {noise} {time}."
+            f"INC_WPN_NSE; I heard {noise} near the {room}.",
+            f"INC_WPN_NSEI: I heard {noise} {time}."
         ]
         return random.choice(mem)
 
@@ -60,8 +60,8 @@ def weapon_noise_memory(crime, flag):
         wrong_room = random.choice([r for r in ROOMS if r != crime["room"]])
         wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
         mem = [
-            f"I heard {wrong_noise} near the {wrong_room}.",
-            f"I heard {wrong_noise} {wrong_time}."
+            f"MISL_WPN_NSE: I heard {wrong_noise} near the {wrong_room}.",
+            f"MISL_WPN_NSE: I heard {wrong_noise} {wrong_time}."
         ]
         return random.choice(mem)
 
@@ -74,8 +74,8 @@ def weapon_evidence_memory(crime, flag):
         room = crime["room"]
         time = random.choice(TIMES1).format(crime_time=crime["time"])
         mem = [
-            f"I saw {evidence} near the {room}.",
-            f"I saw {evidence} {time}.",
+            f"INC_WPN_EVI: I saw {evidence} near the {room}.",
+            f"INC_WPN_EVI: I saw {evidence} {time}.",
 
         ]
         return random.choice(mem)
@@ -87,23 +87,46 @@ def weapon_evidence_memory(crime, flag):
         wrong_room = random.choice([r for r in ROOMS if r != crime["room"]])
         wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
         mem = [
-            f"I saw {evidence} near the {wrong_room}.",
-            f"I saw {evidence} {wrong_time}."
+            f"MISL_WPN_EVI: I saw {evidence} near the {wrong_room}.",
+            f"MISL_WPN_EVI: I saw {evidence} {wrong_time}."
         ]
         return random.choice(mem)
     
 
 # -------------------------------
-# ROOM MEMORY GENERATION
+# ROOM NOISE MEMORY GENERATION
 # -------------------------------
-def room_memory(crime, flag):
+def room_noise_memory(crime, flag):
+    if flag == 1: # INCRIMINATING MEMORY
+        noise = random.choice(ROOMS[crime["room"]]["noises"])
+        time = random.choice(TIMES1).format(crime_time=crime["time"])
+        mem = [
+            f"INC_RM_NSE: I heard {noise}.",
+            f"INC_RM_NSE: I heard {noise} {time}."
+        ]
+        return random.choice(mem)
+
+    else: # MISLEADING MEMORY
+        wrong_room = random.choice([r for r in ROOMS if r != crime["room"]])
+        wrong_noise = random.choice(ROOMS[wrong_room]["noises"])
+        wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
+        mem = [
+            f"MISL_RM_NSE: I heard {wrong_noise}.",
+            f"MISL_RM_NSE: I heard {wrong_noise} {wrong_time}."
+        ]
+        return random.choice(mem)
+
+# -------------------------------
+# ROOM EVIDENCE MEMORY GENERATION
+# -------------------------------
+def room_evidence_memory(crime, flag):
     if flag == 1: # INCRIMINATING MEMORY
         evidence = random.choice(ROOMS[crime["room"]]["evidence"])
         room = crime["room"]
         time = random.choice(TIMES1).format(crime_time=crime["time"])
         mem = [
-            f"I noticed {evidence} by the {room}.",
-            f"I noticed {evidence} {time}."
+            f"INC_RM_EVI: I noticed {evidence} by the {room}.",
+            f"INC_RM_EVI: I noticed {evidence} {time}."
         ]
         return random.choice(mem)
 
@@ -112,38 +135,37 @@ def room_memory(crime, flag):
         wrong_evidence = random.choice(ROOMS[wrong_room]["evidence"])
         wrong_time = random.choice(TIMES2+TIMES3).format(crime_time=random_time())
         mem = [
-            f"I noticed {wrong_evidence} by the {wrong_room}.",
-            f"I noticed {wrong_evidence} {wrong_time}."
+            f"MISL_RM_EVI: I noticed {wrong_evidence} by the {wrong_room}.",
+            f"MISL_RM_EVI: I noticed {wrong_evidence} {wrong_time}."
         ]
         return random.choice(mem)
     
 # -------------------------------
 # SOCIAL MEMORY GENERATION
 # -------------------------------
-def social_memory(lovers, guilty, innocent):
-    roll = random.random()
-    lover_social = random.choice(LOVER_SOCIAL)
-    guilty_social = random.choice(GUILTY_SOCIAL)
-    random_social = random.choice(SOCIAL)
+def incrim_social_memory(guilty):
+    random.shuffle(guilty)
+    social = random.choice(GUILTY_SOCIAL)
     time = random.choice(TIMES3).format(crime_time=random_time())
-    if roll < 0.4 :
-        random.shuffle(guilty)
-        mem = f"{guilty[0]} {guilty_social} {guilty[1]} {time}."
-        return mem
-    if 0.4 < roll < 0.8:
-        random.shuffle(lovers)
-        mem = f"{lovers[0]} {lover_social} {lovers[1]} {time}."
-        return mem 
-    else:
-        innocent_pair = random.sample(innocent, 2) # all guests
-        mem = f"{innocent_pair[0]} {random_social} {innocent_pair[1]} {time}."
-        return mem
-    
-    
-    
+    return f"INC_SOC: {guilty[0]} {social} {guilty[1]} {time}."
 
-    
+def lover_social_memory(lovers):
+    random.shuffle(lovers)
+    social = random.choice(LOVER_SOCIAL)
+    time = random.choice(TIMES3).format(crime_time=random_time())
+    return f"LOV_SOC: {lovers[0]} {social} {lovers[1]} {time}."
 
+def mislead_social_memory(person_a, person_b):
+    social = random.choice(SOCIAL)
+    solo_social = random.choice(SOLO_SOCIAL)
+    time = random.choice(TIMES3).format(crime_time=random_time())
+    mem = [
+        f"MISL_SOC: {person_a} {social} {person_b} {time}.",
+        f"MISL_SOC: {person_a} {solo_social}.",
+        f"MISL_SOC: {person_b} {solo_social}."
+    ]
+    return random.choice(mem)
+    
 # -------------------------------
 # RANDOM MEMORY GENERATION
 # -------------------------------
@@ -151,8 +173,8 @@ def random_memory():
     i_random = random.choice(RANDOMS)
     time = random.choice(TIMES3).format(crime_time=random_time())
 
-    clue = [
-        f"I {i_random} {time}.",
-        f"Someone {i_random} {time}.",
+    mem = [
+        f"RAND: I {i_random} {time}.",
+        f"RAND: Someone {i_random} {time}.",
     ]
-    return random.choice(clue)
+    return random.choice(mem)
