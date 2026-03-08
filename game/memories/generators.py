@@ -13,7 +13,9 @@ from game.utils.time_utils import random_time
 # -------------------------------
 # MOVEMENT MEMORY GENERATION
 # -------------------------------
-def movement_memory(crime, guilty, innocent, flag, role):
+def movement_memory(crime, role, flag):
+    guilty = crime["guilty"]
+    innocent = crime["innocent"]
     observation = random.choice(OBSERVATIONS)
     movement = random.choice(MOVEMENTS)
 
@@ -42,7 +44,7 @@ def movement_memory(crime, guilty, innocent, flag, role):
 # -------------------------------
 # WEAPON NOISE MEMORY GENERATION
 # -------------------------------
-def weapon_noise_memory(crime, flag, role):
+def weapon_noise_memory(crime, role, flag):
     if flag == 1: # INCRIMIINATING MEMORY
         noise = random.choice(WEAPONS[crime["weapon"]]["noises"])
         room = crime["room"]
@@ -68,7 +70,7 @@ def weapon_noise_memory(crime, flag, role):
 # -------------------------------
 # WEAPON EVIDENCE MEMORY GENERATION
 # -------------------------------
-def weapon_evidence_memory(crime, flag, role):
+def weapon_evidence_memory(crime, role, flag):
     if flag == 1: # INCRIMINATING MEMORY
         evidence = random.choice(WEAPONS[crime["weapon"]]["evidence"])
         room = crime["room"]
@@ -95,7 +97,7 @@ def weapon_evidence_memory(crime, flag, role):
 # -------------------------------
 # ROOM NOISE MEMORY GENERATION
 # -------------------------------
-def room_noise_memory(crime, flag, role):
+def room_noise_memory(crime, role, flag):
     if flag == 1: # INCRIMINATING MEMORY
         noise = random.choice(ROOMS[crime["room"]]["noises"])
         time = random.choice(TIMES1).format(crime_time=crime["time"])
@@ -118,7 +120,7 @@ def room_noise_memory(crime, flag, role):
 # -------------------------------
 # ROOM EVIDENCE MEMORY GENERATION
 # -------------------------------
-def room_evidence_memory(crime, flag, role):
+def room_evidence_memory(crime, role, flag):
     if flag == 1: # INCRIMINATING MEMORY
         evidence = random.choice(ROOMS[crime["room"]]["evidence"])
         room = crime["room"]
@@ -142,28 +144,30 @@ def room_evidence_memory(crime, flag, role):
 # -------------------------------
 # SOCIAL MEMORY GENERATION
 # -------------------------------
-def incrim_social_memory(guilty, role):
-    guilty_copy = guilty.copy()
-    random.shuffle(guilty_copy)
+def incrim_social_memory(crime, role):
+    guilty = crime["guilty"]
+    person1, person2 = random.sample(guilty, 2)
     social = random.choice(GUILTY_SOCIAL)
     time = random.choice(TIMES3).format(crime_time=random_time())
-    return (f"{guilty_copy[0]} {social} {guilty_copy[1]} {time}.", "INC_SOC")
+    return (f"{person1} {social} {person2} {time}.", "INC_SOC")
 
-def lover_social_memory(lovers, role):
-    lovers_copy = lovers.copy()
-    random.shuffle(lovers_copy)
+def lover_social_memory(crime, role):
+    lovers = crime["lovers"]
+    person1, person2 = random.sample(lovers, 2)
     social = random.choice(LOVER_SOCIAL)
     time = random.choice(TIMES3).format(crime_time=random_time())
-    return (f"{lovers_copy[0]} {social} {lovers_copy[1]} {time}.", "LOV_SOC")
+    return (f"{person1} {social} {person2} {time}.", "LOV_SOC")
 
-def mislead_social_memory(person_a, person_b, role):
+def mislead_social_memory(crime, role):
+    innocents = crime["innocent"]
+    person1, person2 = random.sample(innocents, 2)
     social = random.choice(SOCIAL)
     solo_social = random.choice(SOLO_SOCIAL)
     time = random.choice(TIMES3).format(crime_time=random_time())
     mem = [
-        f"{person_a} {social} {person_b} {time}.",
-        f"{person_a} {solo_social}.",
-        f"{person_b} {solo_social}."
+        f"{person1} {social} {person2} {time}.",
+        f"{person1} {solo_social}.",
+        f"{person2} {solo_social}."
     ]
     return (random.choice(mem), "MISL_SOC")
     

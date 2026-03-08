@@ -14,6 +14,10 @@ from game.utils.printer import printer
 def generate_crime(assignments):
     culprit = [name for name, data in assignments.items() if data["role"] == "culprit"][0]
     accomplice = [name for name, data in assignments.items() if data["role"] == "accomplice"]
+    guilty = [name for name, data in assignments.items() if data["role"] in ["culprit", "accomplice"]]
+    innocent = [name for name, data in assignments.items() if data["role"] != "guilty"]
+    lovers = [name for name, data in assignments.items() if data["role"] == "lover"]
+
     weapon = random.choice(list(WEAPONS.keys()))
     room = random.choice(list(ROOMS.keys()))
     time = random_time()
@@ -22,7 +26,10 @@ def generate_crime(assignments):
         "culprit":culprit,
         "weapon":weapon,
         "room":room,
-        "time":time
+        "time":time,
+        "guilty": guilty,
+        "innocent": innocent,
+        "lovers" : lovers
     }
 
 def assign_roles(players):
@@ -63,11 +70,7 @@ def initialize_game(assignments):
     # 1. Generate the core crime data (Room, Weapon, Time)
     crime = generate_crime(assignments)
 
-    guilty = [name for name, data in assignments.items() if data["role"] in ["culprit", "accomplice"]]
-    innocent = [name for name, data in assignments.items() if name not in guilty]
-    lovers = [name for name, data in assignments.items() if data["role"] == "lover"]
-
-    # 2. Generate 5 personalized memories for each player
+    # 3. Generate 5 personalized memories for each player
     memories = {
         name: [
             {
@@ -75,7 +78,7 @@ def initialize_game(assignments):
                 "type": mem_type
             }
             for text, mem_type in [
-                recall_player_memory(crime, guilty, innocent, lovers, data["dossier"]["weights"], data["role"])
+                recall_player_memory(crime, data["dossier"]["weights"], data["role"])
                 for _ in range(5)
             ]
         ]
@@ -96,7 +99,7 @@ def main():
 
     assignments = assign_roles(players)
     crime, memories = initialize_game(assignments)
-    printer(assignments, crime, memories, False, False)
+    printer(assignments, crime, memories, True, True)
 
     return crime, memories
 
