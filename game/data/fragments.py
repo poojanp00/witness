@@ -43,28 +43,57 @@ AREAS = [
     "the room"
 ]
 
-SOCIAL = [
-    "was arguing intensely with",
-    "was seen sharing a secret whisper with",
-    "was caught looking nervously at",
-    "seemed to be avoiding eye contact with",
-    "was overheard laughing about something with",
+LOVER_SOCIAL = [
+    "whispered something to",
+    "was laughing about something with",
     "handed a mysterious envelope to",
     "gave a hushed warning to",
     "handed some object to",
     "made some kind of promise to",
+    "was sharing a tender moment with",
+    "was disagreeing with",
+    "was looking nervously at",
+    "didn't want anyone noticing them with"
 ]
 
+GUILTY_SOCIAL = [
+    "was arguing with",
+    "was seen sharing a secret whisper with",
+    "was looking nervously at",
+    "seemed to be avoiding eye contact with",
+    "handed a mysterious envelope to",
+    "gave a hushed warning to",
+    "handed some object to",
+    "made some kind of promise to",
+    "quickly walked past",
+    "didn't want anyone noticing them with"
+]
+
+SOCIAL = [
+    "breifly talked to",
+    "bumped awkwardly into",
+    "was chatting with",
+    "seemed to be looking for",
+    "ran into",
+    "was standing near",
+    "was laughing with"
+]
+
+
 RANDOMS = [
-    "dropped my drink",
+    "dropped a drink",
     "was looking for food",
     "heard music",
     "noticed the lights flicker",
     "heard laughter from another room",
     "saw a cat lurking around",
-    "was supposed to meet someone privately",
     "stepped outside for some air",
-    "left quickly because I thought someone saw me",
+    "was carrying a drink",
+]
+
+O_RANDOMS = [
+    "dropped a drink",
+
 ]
 
 TIMES1 = [
@@ -94,6 +123,5 @@ TIMES3 = [
     "later in the evening",
     "after everything happened",
     "sometime in the night",
-    "before things got chaotic",
-    "when most people were distracted"
+    "before things got chaotic"
 ]

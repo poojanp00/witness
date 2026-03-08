@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nordic Cabin Mystery</title>
+    <style>
+        body { background: #1a1a1a; color: #e0e0e0; font-family: 'Courier New', Courier, monospace; }
+        .card { 
+            background: #2c2c2c; border: 1px solid #d4af37; 
+            padding: 15px; margin: 10px; border-radius: 5px;
+            text-align: center; cursor: pointer;
+        }
+        .hidden { display: none; }
+        .locked { opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="setup">
+        <h1>Nordic Cabin Mystery</h1>
+        <input type="text" id="playerName" placeholder="Enter your name...">
+        <button onclick="joinGame()">Enter Cabin</button>
+    </div>
+
+    <div id="gameView" class="hidden">
+        <h2 id="roleDisplay">Your Role: Loading...</h2>
+        <p id="scenario">A body has been found. You have 5 memories of the night.</p>
+        <div class="dossier-header">
+    <h2>SUBJECT: <span id="userName">DIYA</span></h2>
+    <h3 id="roleTitle">ROLE: THE RIVAL</h3>
+    <hr>
+    <p class="flavor-text">
+        "You've hated the host for years. This cabin feels like a cage, 
+        and everyone here smells like a liar. You were sneaking around... 
+        but did you go too far?"
+    </p>
+</div>
+
+<div class="clue-grid">
+    <div class="clue-card" id="card-1" onclick="flipCard(1)">
+        <div class="front">ROUND 1: RECOLLECTION</div>
+        <div class="back hidden">[CLUE DATA]</div>
+    </div>
+    </div>
+        <div id="clueContainer">
+            </div>
+        
+        <button id="voteBtn" class="locked">Cast Vote</button>
+    </div>
+
+    <script>
+        // 1. DATA FROM YOUR ARTIFACTS.PY (Add the rest of the roles here)
+const ROLE_DETAILS = {
+    "culprit": {
+        "welcome": "The deed is done... blend in, fade into the background.",
+        "strategy": "You are the architect of confusion. Frame others.",
+        "objective": "Survive the votes."
+    },
+    "accomplice": {
+        "welcome": "You saw what happened... If they go down, you go down.",
+        "strategy": "Distraction expert. Flood the room with red herrings.",
+        "objective": "Keep the heat off the Culprit."
+    },
+    "detective": {
+        "welcome": "You are the only one who can see through the fog.",
+        "strategy": "Your memories are high-quality. Trust your 'Anchor' times.",
+        "objective": "Identify the Culprit and the Weapon."
+    }
+    // Add 'rival', 'lover', etc.
+};
+
+// 2. JOIN GAME LOGIC
+function joinGame() {
+    const nameInput = document.getElementById('playerName').value;
+    if (!nameInput) return alert("Enter your name!");
+
+    document.getElementById('setup').classList.add('hidden');
+    document.getElementById('gameView').classList.remove('hidden');
+
+    // In a real game, 'gameData' would come from your Python server
+    // For now, I'm using the mock data we talked about
+    loadPlayerHand(demoData, nameInput);
+}
+
+// 3. LOAD HAND & DOSSIER
+function loadPlayerHand(gameData, playerName) {
+    const allClues = gameData[1];
+    const playerClues = allClues[playerName];
+    
+    // IMPORTANT: Your Python engine needs to return a 3rd object in the list 
+    // that maps names to roles, e.g., gameData[2] = {"Poojan": "detective"}
+    const playerRole = gameData[2][playerName].toLowerCase(); 
+    const roleInfo = ROLE_DETAILS[playerRole];
+
+    document.getElementById('userName').innerText = playerName.toUpperCase();
+    document.getElementById('roleTitle').innerText = "ROLE: " + playerRole.toUpperCase();
+    
+    // Inject Dossier Info
+    const flavorText = document.querySelector('.flavor-text');
+    flavorText.innerHTML = `<strong>Welcome:</strong> ${roleInfo.welcome}<br><br>
+                            <strong>Strategy:</strong> ${roleInfo.strategy}<br><br>
+                            <strong>Objective:</strong> ${roleInfo.objective}`;
+
+    // Populate the 5 cards
+    playerClues.forEach((clueText, index) => {
+        const cardNum = index + 1;
+        const cardBack = document.querySelector(`#card-${cardNum} .back`);
+        if (cardBack) {
+            cardBack.innerText = clueText;
+        }
+    });
+}
+
+// 4. CARD FLIP (Now outside so the button can find it!)
+function flipCard(cardNumber) {
+    const card = document.getElementById(`card-${cardNumber}`);
+    const back = card.querySelector('.back');
+    const front = card.querySelector('.front');
+
+    back.classList.toggle('hidden');
+    front.classList.toggle('hidden');
+    
+    card.style.borderColor = "#8b0000"; 
+    card.style.boxShadow = "0 0 10px #8b0000";
+}
+function generateCards() {
+    const grid = document.querySelector('.clue-grid');
+    for (let i = 1; i <= 5; i++) {
+        grid.innerHTML += `
+            <div class="card clue-card" id="card-${i}" onclick="flipCard(${i})">
+                <div class="front">MEMORY ${i}</div>
+                <div class="back hidden"></div>
+            </div>
+        `;
+    }
+}
+// Run this as soon as the page loads
+generateCards();
+    </script>
+    
+</body>
+</html>
