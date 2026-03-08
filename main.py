@@ -3,6 +3,7 @@ import json
 from game.data.artifacts import ROLES, WEAPONS, ROOMS
 from game.memories.engine import recall_player_memory
 from game.utils.time_utils import random_time
+from game.utils.printer import printer
 
 # -----------------------------
 # CRIME GENERATION
@@ -56,14 +57,12 @@ def assign_roles(players):
     return assignments
 
 
-# -----------------------------
-# MAIN GENERATOR
-# -----------------------------
 # This function generates a crime and clues for each witness based on their role.
 # -----------------------------
 def initialize_game(assignments):
     # 1. Generate the core crime data (Room, Weapon, Time)
     crime = generate_crime(assignments)
+
     guilty = [name for name, data in assignments.items() if data["role"] in ["culprit", "accomplice"]]
     innocent = [name for name, data in assignments.items() if name not in guilty]
     lovers = [name for name, data in assignments.items() if data["role"] == "lover"]
@@ -71,32 +70,35 @@ def initialize_game(assignments):
     # 2. Generate 5 personalized memories for each player
     memories = {
         name: [
-            recall_player_memory(crime, guilty, innocent, lovers, data["dossier"]["weights"]) 
-            for _ in range(5)
+            {
+                "text": text,
+                "type": mem_type
+            }
+            for text, mem_type in [
+                recall_player_memory(crime, guilty, innocent, lovers, data["dossier"]["weights"], data["role"])
+                for _ in range(5)
+            ]
         ]
         for name, data in assignments.items()
     }
     return crime, memories
 
-players = ["Poojan", "Diya", "Kishan", "Shalini", "Sonal", "Sandeep", "Baa"]
-# crime, clues = 
-# distribute_player_hands(players, crime, clues)
-# print_mystery(crime, clues)
-# print(clues)
+
 
 def main():
-    assignments = assign_roles(players)
+    """Run the game initialization and print game state.
 
-    player_memories = initialize_game(assignments)
-    # print(assignments)
-    print("--- GAME ASSIGNMENTS ---")
-    for name, data in assignments.items():
-        role_label = data["role"].upper()
-        print(f"{name.ljust(12)} | Role: {role_label}")
-    print("\n\n")
-    print(player_memories)
-    print(json.dumps(player_memories, indent=4))
-    return player_memories
+    Returns:
+        crime: Crime details (weapon, room, time)
+        memories: Player memories dict
+    """
+    players = ["Poojan", "Diya", "Kishan", "Shalini", "Sonal", "Sandeep", "Baa"]
+
+    assignments = assign_roles(players)
+    crime, memories = initialize_game(assignments)
+    printer(assignments, crime, memories, False, False)
+
+    return crime, memories
 
 if __name__ =="__main__":
     main()

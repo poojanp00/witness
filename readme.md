@@ -296,6 +296,59 @@ weighted_choice(weights) → mem_type (incriminating/misleading/social/random)
 
 **Note:** Social memory types (Guilty, Lovers, Innocent) can appear from both their source memory type AND the Social memory type category, so they have multiple pathways to selection, but only 1 unique prefix + function per type.
 
+### Memory Data Structure
+
+Each memory is returned as a tuple `(text, type)` from generator functions and stored as a dictionary:
+
+```python
+{
+    "text": "I heard a gunshot near the ballroom.",
+    "type": "INC_WPN_NSE"
+}
+```
+
+**Storage Format in Game:**
+- `recall_player_memory()` returns: `(memory_text: str, memory_type: str)`
+- `initialize_game()` stores as: `{"text": memory_text, "type": memory_type}`
+- Each player receives 5 personalized memories matching their role's weights
+
+**Display Control:**
+
+Use `format_memories()` with `show_type` parameter to toggle memory type display:
+
+```python
+# With types (default)
+format_memories((crime, memories), verbose=True, show_type=True)
+
+# Without types
+format_memories((crime, memories), verbose=True, show_type=False)
+```
+
+**Example output with types:**
+```
+DIYA
+  1. [INC_WPN_EVI] I saw someone slipping something into a glass near the ballroom.
+  2. [MISL_MOV] I think I saw a silhouette hiding near the scene.
+  3. [INC_SOC] Baa didn't want anyone noticing them with Shalini.
+```
+
+**Example output without types:**
+```
+DIYA
+  1. I saw someone slipping something into a glass near the ballroom.
+  2. I think I saw a silhouette hiding near the scene.
+  3. Baa didn't want anyone noticing them with Shalini.
+```
+
+**Using main():**
+```python
+# Run with types shown
+main(show_types=True)
+
+# Run with types hidden
+main(show_types=False)
+```
+
 ---
 
 ## Game Flow

@@ -1,27 +1,23 @@
-# -----------------------------
-# PRINT FUNCTION
-# -----------------------------
-# This function prints the crime details and the clues provided by each witness.
-# -------------------------------
-import random
-from game.data.roles import culprits, guests
+def printer(assignments, crime, memories, show_answers, show_type):
 
-def print_mystery(crime, clues):
+    if show_answers:
+        print("--- GAME ASSIGNMENTS ---\n")
+        for name, data in assignments.items():
+            role_label = data["role"].upper()
+            print(f"{name.ljust(12)} | Role: {role_label}")
+        print()
 
-    print("\nCRIME (hidden from players)")
-    print("----------------------------")
-    print(f"Culprit: {crime['culprit']}")
-    print(f"Weapon: {crime['weapon']}")
-    print(f"Room: {crime['room']}")
-    print(f"Time: {crime['time']}")
+        print("--- CRIME ---\n")
+        print(f"Weapon: {crime['weapon']}, Room: {crime['room']}, Time: {crime['time']}")
+        print()
 
-    print("\nWITNESS CLUES")
-    print("----------------------------")
+    print("--- PLAYER MEMORIES ---")
+    for name in sorted(memories.keys()):
+        print(f"\n{name.upper()}")
+        for i, memory in enumerate(memories[name], 1):
+            if show_type:
+                print(f"  {i}. [{memory['type']}] {memory['text']}")
+            else:
+                print(f"  {i}. {memory['text']}")
 
-    for person,clue_list in clues.items():
-
-        roles = {**culprits, **guests}
-        print(f"\n{person} ({roles[person]})")
-        random.shuffle(clue_list)
-        for i,c in enumerate(clue_list,1):
-            print(f"{i}. {c}")
+    return memories
